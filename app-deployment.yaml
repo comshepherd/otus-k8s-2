@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: health-app-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: health-app
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: health-app
+    spec:
+      containers:
+        - name: health-app
+          image: tomlindon/my-repo:health_v2
+          env:
+            - name: DB_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: health-app-config-map
+                  key: db.url
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: health-app-secret
+                  key: db.user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: health-app-secret
+                  key: db.password
+          ports:
+            - name: web
+              containerPort: 8000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10

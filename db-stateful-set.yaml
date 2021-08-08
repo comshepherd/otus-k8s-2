@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-stateful-set
+spec:
+  selector:
+    matchLabels:
+      app: postgres-stateful-set
+  serviceName: 'postgres-db'
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: postgres-stateful-set
+    spec:
+      containers:
+        - name: postgredb
+          image: postgres:11
+          ports:
+            - containerPort: 5432
+              name: postgresdb
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: health-app-secret
+                  key: db.user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: health-app-secret
+                  key: db.password
+          volumeMounts:
+            - name: postgredb
+              mountPath: /var/lib/postgresql/data
+              subPath: postgres
+  volumeClaimTemplates:
+    - metadata:
+        name: postgredb
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+
